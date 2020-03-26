@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  db:
+   container_name: clearcode-db
+   image: postgres:11.1
+   ports:
+     - "5432:5432"
+   volumes:
+     - ./data/postgresql:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    container_name: clearcode-redis
+    expose:
+      - 6379
+
+  backend:
+   container_name: clearcode-backend
+   build: .
+   command: ["./wait-for-it.sh", "db:5342", "--", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+   links:
+     - redis:redis
+   volumes:
+    - .:/app
+   ports:
+     - "8000:8000"
+   depends_on:
+     - db
+   environment:
+     - DJANGO_SETTINGS_MODULE=api.config.settings
